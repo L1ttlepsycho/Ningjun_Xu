@@ -29,20 +29,11 @@ $x^k_{i,j}$: 0或1.若车辆k从节点i移动到节点j，值为1，否则为0
 $Min \sum \limits_{k=1}^{m} \sum \limits_{i=0}^{n} \sum \limits_{j=0}^{n}{c_{i,j} \cdot x_{i,j}^k }$
 
 #### Constraints
-$
-\sum \limits_{k=1}^{m} \sum \limits_{j=0}^{n}{ x_{i,j}^k }=1
-, \forall i=1,...n
-$
+$\sum \limits_{k=1}^{m} \sum \limits_{j=0}^{n}{ x_{i,j}^k }=1, \forall i=1,...n$
 
-$
-\sum \limits_{j=1}^{n}{ x_{0,j}^k }=1
-, \forall i=1,...n
-$
+$\sum \limits_{j=1}^{n}{ x_{0,j}^k }=1, \forall i=1,...n$
 
-$
-\sum \limits_{i=1}^{n}{ x_{i,0}^k }=1
-, \forall i=1,...n
-$
+$\sum \limits_{i=1}^{n}{ x_{i,0}^k }=1, \forall i=1,...n$
 
 
 ## 研究现状
@@ -135,6 +126,7 @@ POMO给出了Pretrained Model，也可以自己训练。POMO中实例参照Atten
 
 Dependency: torch
 
+![Run inference](https://github.com/L1ttlepsycho/Ningjun_Xu/blob/main/POMO_test.jpg)
 
 初步跑通老版本（ipynb）的inference，代码仓库中使用的是随机生成CVRP实例进行测试（貌似用的AM的generator）；如果要使用CVRP Dataset可能需要使用新版本（py）并且搞清楚模型输入，自行编写测试API。
 
