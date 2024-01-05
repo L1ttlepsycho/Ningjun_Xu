@@ -1,4 +1,3 @@
-# VRP
 **Usable**： 已经可以使用
 
 **Exploring**： 还在探索中
@@ -11,9 +10,11 @@
 
 2023.12.28-2023.12.29: AM环境配置，跑通AM方法示例，添加HGS、POMO、AM说明。POMO、AM方法仍然存在一些疑问（POMO是否可以采用别的Policy Network，AM测试Dataset如何载入）。
 
-2024.1.3: L2D环境配置， ~~代码与现版本numpy有一些冲突，已解决。~~ 正在尝试跑完 example(这个example非常详细，也非常耗时)。
+2023.12.31: 服务器实验环境配置
 
+2024.1.3-2024.1.5: ~~L2D环境配置，代码与现版本numpy有一些冲突，已解决。~~正在尝试跑完 example(这个example非常详细，也非常耗时，截止5号还在跑训练数据generation，2000条训练实例需要将近两天生成,包括了一些算法baseline需要用最新版本更新)。增加了谷歌运筹问题求解工具OR-Tools（启发式算法求解器，实在找不到最近关于CVRP以及VRP-TW的求解方法了，近两年启发式算法的研究热点感觉更多是求解一些更复杂的VRP问题比如real time VRP等。近年来的经典算法：LKH和HGS 已经囊括）
 
+# VRP
 ## 问题定义
 ### Vehicle Routing Problem
 
@@ -100,6 +101,10 @@ Standard Output: ```It [N1] [N2] | T(s) [T] | Feas [NF] [BestF] [AvgF] | Inf [NI
 [PC] and [PD]: Current penalty level per unit of excess capacity and duration
 ```
 
+#### [OR-tools](https://developers.google.com/optimization/routing/cvrp?hl=zh-cn)
+
+
+
 ### 机器学习方法 **[Exploring...]**
 #### [Attention Mechanism](https://arxiv.org/abs/1803.08475)  **[Exploring...]**
 [代码仓库](https://github.com/wouterkool/attention-learn-to-route/tree/master)里有作者实现的简单可视化，示例已经跑通。
@@ -127,7 +132,6 @@ POMO给出了Pretrained Model，也可以自己训练。POMO中实例参照Atten
 
 Dependency: torch
 
-![Run inference](https://github.com/L1ttlepsycho/Ningjun_Xu/blob/main/POMO_test.jpg)
 
 初步跑通老版本（ipynb）的inference，代码仓库中使用的是随机生成CVRP实例进行测试（貌似用的AM的generator）；如果要使用CVRP Dataset可能需要使用新版本（py）并且搞清楚模型输入，自行编写测试API。
 
@@ -136,6 +140,55 @@ Dependency: torch
 
 #### [L2D(Learning to Delegate)](https://arxiv.org/abs/2107.04139) **[Exploring...]**（**这篇的Related work很有用**）
 大致看了一下，是通过机器学习方法优化搜索过程（把指数问题分为若干子问题，通过改善子问题求解来加速搜索过程）？ [代码仓库](https://github.com/mit-wu-lab/learning-to-delegate)未给出Pretrained model，要自己训练。
+
+**Problem instance Generation**
+
+生成train、valuation、test instance（自己改SPLIT参数）
+```
+export SPLIT=val # options: [train,val,test]
+export N=500 # options: [500,1000,2000,3000]
+export SAVE_DIR=generations/uniform_N$N
+export N_INSTANCES=40 # 2000 for train, 40 for val and test. May set to less to save time
+export N_CPUS=40 # set this according to your compute budget
+
+python generate_initial.py $SAVE_DIR $SPLIT $N --n_instances $N_INSTANCES --n_process $N_CPUS --n_threads_per_process 1
+```
+
+**LKH Baseline Generation**
+```
+export SPLIT=val # options: [val,test]
+export LKH_STEPS=30000 # use 50000 for N = 3000
+export N_RUNS=5 # use 1 for experimentation to save time
+
+python run_lkh.py $SAVE_DIR/lkh $SPLIT --save_dir $SAVE_DIR --n_lkh_trials $LKH_STEPS --init_tour --index_start 0 --index_end $N_INSTANCES --n_runs $N_RUNS --n_cpus $N_CPUS
+```
+
+**Subproblem Selection Baselines**
+```
+export SPLIT=val # options: [val,test]
+export METHOD=sample # options: use [sample,min_count,max_min_dist] for [Random, Min Count, Max Min Dist] respectively
+export K=10 # options: [5,10]
+export DEPTH=400 # respectively for N = [500,1000,2000,3000], use [400,600,1200,2000] for K = 10 or [1000,2000,3000,4500] for K = 5
+export N_INSTANCES=40
+export N_RUNS=5 # use 1 for experimentation to save time
+export DATASET_DIR=$SAVE_DIR/subproblem_selection_lkh
+
+MKL_NUM_THREADS=1 python generate_multiprocess.py $DATASET_DIR $SPLIT --save_dir $SAVE_DIR --n_lkh_trials 500 --n_cpus $N_CPUS --n_runs $N_RUNS --index_start 0 --index_end $N_INSTANCES --beam_width 1 --$METHOD --n_route_neighbors $K --generate_depth $DEPTH
+```
+
+**Generating Training and Validation Data**
+
+重量级选手，一个实例的生成要0.5-1h，训练模型用了2k个instance...
+
+```
+export SPLIT=train # options: [train,val] for training and validation respectively
+export N_INSTANCES=2000 # use 2000 for train and 40 for val
+export K=10 # options: [5,10]
+export DEPTH=30 # for K = 10: use 30 for N = [500,1000]; for K = 5: use [40,80,160] for N = [500,1000,2000]
+export DATASET_DIR=$SAVE_DIR/subproblem_selection_lkh
+
+python generate_multiprocess.py $DATASET_DIR $SPLIT --save_dir $SAVE_DIR --n_lkh_trials 500 --n_cpus $N_CPUS --index_start 0 --index_end $N_INSTANCES --beam_width 1 --n_route_neighbors $K --generate_depth $DEPTH
+```
 
 
 ## Evaluation metrics
