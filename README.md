@@ -2,6 +2,7 @@
 
 **Exploring**： 还在探索中
 
+# VRP
 2023.12.22: 增加Attention Mechanism方法。
 
 2023.12.25: HGS在自习室台式机上跑通；更新XML-100使用方法以及实例说明，更新HGS中有关python API/自行生成可执行文件优劣的Comment，更新HGS编译方式以及parameters调教, output说明。
@@ -14,7 +15,6 @@
 
 2024.1.3-2024.1.5: ~~L2D环境配置，代码与现版本numpy有一些冲突，已解决。~~正在尝试跑完 example(这个example非常详细，也非常耗时，截止5号还在跑训练数据generation，2000条训练实例需要将近两天生成,包括了一些算法baseline需要用最新版本更新)。增加了谷歌运筹问题求解工具OR-Tools（启发式算法求解器，实在找不到最近关于CVRP以及VRP-TW的求解方法了，近两年启发式算法的研究热点感觉更多是求解一些更复杂的VRP问题比如real time VRP等。近年来的经典算法：LKH和HGS 已经囊括）
 
-# VRP
 ## 问题定义
 ### Vehicle Routing Problem
 
